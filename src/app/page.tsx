@@ -1,5 +1,8 @@
 'use client';
 
+// Ensure browser polyfills (Buffer) are applied before other imports
+import './polyfills.client';
+
 import { useState } from 'react';
 import ConnectButton from '@/components/connect-button';
 import InitButton from '@/components/init-button';
