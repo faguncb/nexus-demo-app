@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { addProgressListener, removeProgressListener } from '@/lib/nexus';
+import { addProgressListener, removeProgressListener } from '@/src/lib/nexus';
 
 interface ProgressEvent {
     type: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { sdk, isInitialized } from '@/src/lib/nexus';
+import { transfer, isInitialized } from '@/src/lib/nexus';
 import { ethers } from 'ethers';
 
 export default function TransferButton({
@@ -16,7 +16,7 @@ export default function TransferButton({
         const amount = ethers.parseUnits('0.01', 6); // 0.01 USDC (6 decimals)
 
         try {
-            const txHash = await sdk.transfer({
+            const txHash = await transfer({
                 fromChainId,
                 toChainId,
                 token,

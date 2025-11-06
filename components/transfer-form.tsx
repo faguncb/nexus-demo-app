@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { sdk, isInitialized } from '@/src/lib/nexus';
-import { SUPPORTED_CHAINS, getTokenOnChain, TEST_TOKENS } from '@/lib/nexus';
+import { transfer, bridge, isInitialized, SUPPORTED_CHAINS, getTokenOnChain, TEST_TOKENS } from '@/src/lib/nexus';
 import { ethers } from 'ethers';
 
 interface Props {
@@ -42,14 +41,14 @@ export default function TransferForm({ onProgress }: Props) {
 
             let txHash: string;
             if (mode === 'transfer') {
-                txHash = await sdk.transfer({
+                txHash = await transfer({
                     fromChainId: fromChain,
                     toChainId: toChain,
                     token: tokenAddr,
                     amount: amountWei,
                 });
             } else {
-                txHash = await sdk.bridge({
+                txHash = await bridge({
                     fromChainId: fromChain,
                     toChainId: toChain,
                     token: tokenAddr,

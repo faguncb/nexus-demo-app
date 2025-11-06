@@ -70,6 +70,40 @@ async function getSdk() {
 // Deprecated direct export removed; use getSdk() internally
 
 // ---------------------------------------------------------------------
+// Progress event listener system
+// ---------------------------------------------------------------------
+export interface ProgressEvent {
+    type: string;
+    intentId?: string;
+    status?: 'pending' | 'submitted' | 'proving' | 'finalizing' | 'completed' | 'failed';
+    txHash?: string;
+    chainId?: number;
+    message?: string;
+}
+
+type ProgressListener = (event: ProgressEvent) => void;
+
+const progressListeners: Set<ProgressListener> = new Set();
+
+export function addProgressListener(listener: ProgressListener) {
+    progressListeners.add(listener);
+}
+
+export function removeProgressListener(listener: ProgressListener) {
+    progressListeners.delete(listener);
+}
+
+function emitProgress(event: ProgressEvent) {
+    progressListeners.forEach((listener) => {
+        try {
+            listener(event);
+        } catch (error) {
+            console.error('Error in progress listener:', error);
+        }
+    });
+}
+
+// ---------------------------------------------------------------------
 // Helper wrappers (unchanged)
 // ---------------------------------------------------------------------
 export function isInitialized() {
@@ -92,6 +126,28 @@ export async function deinit() {
 export async function getUnifiedBalances() {
     const sdk = await getSdk();
     return await sdk.getUnifiedBalances();
+}
+
+export async function transfer(params: {
+    fromChainId: number;
+    toChainId: number;
+    token: string;
+    amount: bigint;
+    recipient?: string;
+}) {
+    const sdk = await getSdk();
+    return await sdk.transfer(params);
+}
+
+export async function bridge(params: {
+    fromChainId: number;
+    toChainId: number;
+    token: string;
+    amount: bigint;
+    recipient?: string;
+}) {
+    const sdk = await getSdk();
+    return await sdk.bridge(params);
 }
 
 // ---------------------------------------------------------------------
