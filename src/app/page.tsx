@@ -1,13 +1,13 @@
 'use client';
 
-// Ensure browser polyfills (Buffer) are applied before other imports
-import './polyfills.client';
-
 import { useState } from 'react';
 import ConnectButton from '@/components/connect-button';
 import InitButton from '@/components/init-button';
+import RegisterHooksButton from '@/components/register-hooks-button';
 import FetchUnifiedBalanceButton from '@/components/fetch-unified-balance-button';
+import TransferButton from '@/components/transfer-button';
 import DeinitButton from '@/components/de-init-button';
+import TransferProgress from '@/components/transfer-progress';
 import { isInitialized } from '@/src/lib/nexus';
 
 export default function Page() {
@@ -19,20 +19,40 @@ export default function Page() {
         'disabled:opacity-50 disabled:cursor-not-allowed';
 
     return (
-        <main className="min-h-screen flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
+        <main className="min-h-screen flex flex-col items-center justify-center gap-6 p-4">
+            <div className="flex flex-col items-center gap-4 w-full max-w-md">
                 <ConnectButton className={btn} />
-                <InitButton className={btn} onReady={() => setInitialized(true)} />
-                <FetchUnifiedBalanceButton className={btn} onResult={(r) => setBalances(r)} />
-                <DeinitButton className={btn} onDone={() => { setInitialized(false); setBalances(null); }} />
+                <InitButton
+                    className={btn}
+                    onReady={() => setInitialized(true)}
+                />
+                <RegisterHooksButton className={btn} />
+                <FetchUnifiedBalanceButton
+                    className={btn}
+                    onResult={(r) => setBalances(r)}
+                />
+                <TransferButton className={btn} />
+                <DeinitButton
+                    className={btn}
+                    onDone={() => {
+                        setInitialized(false);
+                        setBalances(null);
+                    }}
+                />
 
-                <div className="mt-2">
-                    <b>Nexus SDK Initialization Status:</b> {initialized ? 'Initialized' : 'Not initialized'}
+                <div className="mt-4 text-center">
+                    <b>Nexus SDK Status:</b>{' '}
+                    {initialized ? 'Initialized' : 'Not initialized'}
                 </div>
 
                 {balances && (
-                    <pre className="whitespace-pre-wrap">{JSON.stringify(balances, null, 2)}</pre>
+                    <pre className="mt-4 p-4 bg-gray-100 rounded whitespace-pre-wrap text-xs overflow-auto max-w-full">
+            {JSON.stringify(balances, null, 2)}
+          </pre>
                 )}
+
+                {/* ←←← NEW: Real-time progress feed */}
+                <TransferProgress />
             </div>
         </main>
     );

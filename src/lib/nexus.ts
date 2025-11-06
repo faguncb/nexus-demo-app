@@ -1,5 +1,44 @@
 import { ethers } from 'ethers';
 
+// ... existing imports ...
+
+// ---------------------------------------------------------------------
+// Supported chains & token list (testnet)
+// ---------------------------------------------------------------------
+export const SUPPORTED_CHAINS = {
+    11155111: { name: 'Sepolia', native: 'ETH' },
+    84532: { name: 'Base Sepolia', native: 'ETH' },
+    421614: { name: 'Arbitrum Sepolia', native: 'ETH' },
+    11155420: { name: 'Optimism Sepolia', native: 'ETH' },
+};
+
+export const TEST_TOKENS = {
+    // USDC on Sepolia
+    '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238': {
+        symbol: 'USDC',
+        decimals: 6,
+        chains: [11155111],
+    },
+    // Mock DAI on Base Sepolia (replace with real if needed)
+    '0x11fe4b6ae13d2a6055c8d89530d10d79d5d95d9d': {
+        symbol: 'DAI',
+        decimals: 18,
+        chains: [84532],
+    },
+};
+
+// ---------------------------------------------------------------------
+// Get token address on a specific chain
+// ---------------------------------------------------------------------
+export function getTokenOnChain(symbol: string, chainId: number): string | null {
+    for (const [addr, info] of Object.entries(TEST_TOKENS)) {
+        if (info.symbol === symbol && info.chains.includes(chainId)) {
+            return addr;
+        }
+    }
+    return null;
+}
+
 function ensurePolyfills() {
     try {
         // Buffer for browser runtime
