@@ -14,7 +14,7 @@ export default function BridgeButton({ className }: Props) {
         // Demo values mirroring transfer button defaults
         const fromChainId = 11155111; // Sepolia
         const toChainId = 84532; // Base Sepolia
-        const token = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'; // USDC on Sepolia
+        const token = 'USDC';
         const amount = ethers.parseUnits('0.01', 6); // 0.01 USDC (6 decimals)
 
         try {

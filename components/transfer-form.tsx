@@ -9,11 +9,12 @@ interface Props {
 }
 
 export default function TransferForm({ onProgress }: Props) {
-    const [fromChain, setFromChain] = useState<number>(11155111);
-    const [toChain, setToChain] = useState<number>(84532);
+    const [fromChain, setFromChain] = useState<number>(1);
+    const [toChain, setToChain] = useState<number>(1);
     const [tokenSymbol, setTokenSymbol] = useState<string>('USDC');
     const [amount, setAmount] = useState<string>('0.01');
     const [mode, setMode] = useState<'transfer' | 'bridge'>('transfer');
+    const [recipient, setRecipient] = useState<string>('');
     const [loading, setLoading] = useState(false);
     const [lastTx, setLastTx] = useState<string | null>(null);
 
@@ -22,16 +23,27 @@ export default function TransferForm({ onProgress }: Props) {
         ...info,
     }));
 
-    const tokens = Object.values(TEST_TOKENS).filter((t) =>
+    const tokens = TEST_TOKENS.filter((t) =>
         t.chains.includes(fromChain)
     );
 
     const submit = async () => {
         if (!isInitialized()) return alert('Initialize SDK first');
-        if (fromChain === toChain) return alert('Source and dest chain must differ');
+        if (mode === 'bridge' && fromChain === toChain) {
+            return alert('Source and destination chains must differ for bridge');
+        }
 
-        const tokenAddr = getTokenOnChain(tokenSymbol, fromChain);
-        if (!tokenAddr) return alert('Token not available on source chain');
+        const tokenMeta = getTokenOnChain(tokenSymbol, fromChain);
+        if (!tokenMeta) return alert('Token not available on source chain');
+
+        if (mode === 'transfer') {
+            if (!recipient.trim()) {
+                return alert('Destination address is required for transfers');
+            }
+            if (!ethers.isAddress(recipient.trim())) {
+                return alert('Destination address is invalid');
+            }
+        }
 
         setLoading(true);
         setLastTx(null);
@@ -39,25 +51,29 @@ export default function TransferForm({ onProgress }: Props) {
             type: mode,
             status: 'pending',
             chainId: fromChain,
-            message: 'Submitting transaction...',
+            message:
+                mode === 'transfer'
+                    ? `Submitting transfer to ${recipient.trim()}`
+                    : 'Submitting transaction...',
         });
 
         try {
-            const amountWei = ethers.parseUnits(amount, TEST_TOKENS[tokenAddr].decimals);
+            const amountWei = ethers.parseUnits(amount, tokenMeta.decimals);
 
             let txHash: string;
             if (mode === 'transfer') {
                 txHash = await transfer({
                     fromChainId: fromChain,
                     toChainId: toChain,
-                    token: tokenAddr,
+                    token: tokenSymbol,
                     amount: amountWei,
+                    recipient: mode === 'transfer' ? recipient.trim() : undefined,
                 });
             } else {
                 txHash = await bridge({
                     fromChainId: fromChain,
                     toChainId: toChain,
-                    token: tokenAddr,
+                    token: tokenSymbol,
                     amount: amountWei,
                 });
             }
@@ -68,7 +84,11 @@ export default function TransferForm({ onProgress }: Props) {
                 status: 'submitted',
                 chainId: toChain,
                 txHash,
-                message: 'Transaction submitted to network',
+                message:
+                    mode === 'transfer'
+                        ? `Transfer submitted to ${recipient.trim()}`
+                        : 'Transaction submitted to network',
+                recipient: mode === 'transfer' ? recipient.trim() : undefined,
             });
             alert(`${mode.toUpperCase()} submitted! Tx: ${txHash.slice(0, 10)}...`);
         } catch (e: any) {
@@ -84,6 +104,33 @@ export default function TransferForm({ onProgress }: Props) {
         }
     };
 
+    const setTransferMode = () => {
+        setMode('transfer');
+        setToChain(fromChain);
+    };
+
+    const setBridgeMode = () => {
+        setMode('bridge');
+        if (fromChain === toChain) {
+            const fallback = chains.find((c) => c.id !== fromChain);
+            if (fallback) setToChain(fallback.id);
+        }
+    };
+
+    const handleFromChainChange = (value: number) => {
+        setFromChain(value);
+        const availableTokens = TEST_TOKENS.filter((t) => t.chains.includes(value));
+        if (availableTokens.length > 0 && !availableTokens.some((t) => t.symbol === tokenSymbol)) {
+            setTokenSymbol(availableTokens[0].symbol);
+        }
+        if (mode === 'transfer') {
+            setToChain(value);
+        } else if (mode === 'bridge' && value === toChain) {
+            const fallback = chains.find((c) => c.id !== value);
+            if (fallback) setToChain(fallback.id);
+        }
+    };
+
     return (
         <div className="mt-6 w-full max-w-md bg-white p-6 rounded-xl shadow-lg">
             <h3 className="text-lg font-bold mb-4">
@@ -94,13 +141,13 @@ export default function TransferForm({ onProgress }: Props) {
                 {/* Mode Toggle */}
                 <div className="flex gap-2">
                     <button
-                        onClick={() => setMode('transfer')}
+                        onClick={setTransferMode}
                         className={`flex-1 py-2 rounded ${mode === 'transfer' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     >
                         Transfer
                     </button>
                     <button
-                        onClick={() => setMode('bridge')}
+                        onClick={setBridgeMode}
                         className={`flex-1 py-2 rounded ${mode === 'bridge' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     >
                         Bridge
@@ -112,7 +159,7 @@ export default function TransferForm({ onProgress }: Props) {
                     <label className="block text-sm font-medium">From Chain</label>
                     <select
                         value={fromChain}
-                        onChange={(e) => setFromChain(Number(e.target.value))}
+                        onChange={(e) => handleFromChainChange(Number(e.target.value))}
                         className="mt-1 w-full p-2 border rounded"
                     >
                         {chains.map((c) => (
@@ -126,19 +173,25 @@ export default function TransferForm({ onProgress }: Props) {
                 {/* To Chain */}
                 <div>
                     <label className="block text-sm font-medium">To Chain</label>
-                    <select
-                        value={toChain}
-                        onChange={(e) => setToChain(Number(e.target.value))}
-                        className="mt-1 w-full p-2 border rounded"
-                    >
-                        {chains
-                            .filter((c) => c.id !== fromChain)
-                            .map((c) => (
-                                <option key={c.id} value={c.id}>
-                                    {c.name}
-                                </option>
-                            ))}
-                    </select>
+                    {mode === 'bridge' ? (
+                        <select
+                            value={toChain}
+                            onChange={(e) => setToChain(Number(e.target.value))}
+                            className="mt-1 w-full p-2 border rounded"
+                        >
+                            {chains
+                                .filter((c) => c.id !== fromChain)
+                                .map((c) => (
+                                    <option key={c.id} value={c.id}>
+                                        {c.name}
+                                    </option>
+                                ))}
+                        </select>
+                    ) : (
+                        <div className="mt-1 w-full p-2 border rounded bg-gray-100 text-gray-700">
+                            {chains.find((c) => c.id === fromChain)?.name ?? 'Select a chain'}
+                        </div>
+                    )}
                 </div>
 
                 {/* Token */}
@@ -168,6 +221,20 @@ export default function TransferForm({ onProgress }: Props) {
                         placeholder="0.01"
                     />
                 </div>
+
+                {/* Recipient (Transfer only) */}
+                {mode === 'transfer' && (
+                    <div>
+                        <label className="block text-sm font-medium">Destination Address</label>
+                        <input
+                            type="text"
+                            value={recipient}
+                            onChange={(e) => setRecipient(e.target.value)}
+                            className="mt-1 w-full p-2 border rounded"
+                            placeholder="0x..."
+                        />
+                    </div>
+                )}
 
                 {/* Submit */}
                 <button
