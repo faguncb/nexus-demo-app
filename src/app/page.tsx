@@ -5,9 +5,9 @@ import ConnectButton from '@/components/connect-button';
 import InitButton from '@/components/init-button';
 import RegisterHooksButton from '@/components/register-hooks-button';
 import FetchUnifiedBalanceButton from '@/components/fetch-unified-balance-button';
-import TransferButton from '@/components/transfer-button';
 import DeinitButton from '@/components/de-init-button';
 import TransferProgress from '@/components/transfer-progress';
+import TransferForm from '@/components/transfer-form';
 import { isInitialized } from '@/src/lib/nexus';
 
 export default function Page() {
@@ -31,7 +31,7 @@ export default function Page() {
                     className={btn}
                     onResult={(r) => setBalances(r)}
                 />
-                <TransferButton className={btn} />
+                <TransferForm />
                 <DeinitButton
                     className={btn}
                     onDone={() => {
