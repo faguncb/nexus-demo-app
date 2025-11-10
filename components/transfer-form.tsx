@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { transfer, bridge, isInitialized, SUPPORTED_CHAINS, getTokenOnChain, TEST_TOKENS } from '@/src/lib/nexus';
 import { ethers } from 'ethers';
 
 interface Props {
-    onProgress: (e: any) => void;
+    onProgress?: (e: any) => void;
 }
 
 export default function TransferForm({ onProgress }: Props) {
@@ -35,6 +35,12 @@ export default function TransferForm({ onProgress }: Props) {
 
         setLoading(true);
         setLastTx(null);
+        onProgress?.({
+            type: mode,
+            status: 'pending',
+            chainId: fromChain,
+            message: 'Submitting transaction...',
+        });
 
         try {
             const amountWei = ethers.parseUnits(amount, TEST_TOKENS[tokenAddr].decimals);
@@ -57,8 +63,21 @@ export default function TransferForm({ onProgress }: Props) {
             }
 
             setLastTx(txHash);
+            onProgress?.({
+                type: mode,
+                status: 'submitted',
+                chainId: toChain,
+                txHash,
+                message: 'Transaction submitted to network',
+            });
             alert(`${mode.toUpperCase()} submitted! Tx: ${txHash.slice(0, 10)}...`);
         } catch (e: any) {
+            onProgress?.({
+                type: mode,
+                status: 'failed',
+                chainId: fromChain,
+                message: e?.message ?? `${mode} failed`,
+            });
             alert(e?.message ?? `${mode} failed`);
         } finally {
             setLoading(false);
