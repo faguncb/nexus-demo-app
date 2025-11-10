@@ -20,6 +20,21 @@ export const SUPPORTED_CHAINS = {
     11155420: { name: 'Optimism Sepolia', native: 'ETH' },
 };
 
+const MAINNET_CHAIN_IDS = new Set<number>([
+    1, // Ethereum Mainnet
+    10, // Optimism
+    56, // BNB Chain
+    137, // Polygon PoS
+    8453, // Base Mainnet
+    42161, // Arbitrum One
+    43114, // Avalanche C-Chain
+    534352, // Scroll
+]);
+
+export function isMainnetChain(chainId: number) {
+    return MAINNET_CHAIN_IDS.has(chainId);
+}
+
 type ChainMetadata = {
     chainName: string;
     nativeCurrency: { name: string; symbol: string; decimals: number };
@@ -108,153 +123,40 @@ type TestToken = {
     chains: number[];
 };
 
-export const TEST_TOKENS: Record<string, TestToken> = {
-    // -----------------------------------------------------------------
-    // Mainnet tokens
-    // -----------------------------------------------------------------
-    // Ethereum Mainnet
-    '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2': {
+type NexusNetwork = 'testnet' | 'mainnet';
+
+export const TEST_TOKENS: TestToken[] = [
+    {
         symbol: 'ETH',
         decimals: 18,
-        chains: [1],
+        chains: [1, 10, 8453, 42161, 137, 43114, 56, 534352, 11155111, 84532, 421614, 11155420],
     },
-    '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48': {
+    {
         symbol: 'USDC',
         decimals: 6,
-        chains: [1],
+        chains: [1, 10, 8453, 42161, 137, 43114, 56, 534352, 11155111, 84532, 421614, 11155420],
     },
-    '0xdAC17F958D2ee523a2206206994597C13D831ec7': {
+    {
         symbol: 'USDT',
         decimals: 6,
-        chains: [1],
+        chains: [1, 10, 8453, 42161, 137, 43114, 56, 534352, 421614, 11155420],
     },
-    // Arbitrum One
-    '0x82aF49447D8a07e3Bd95BD0d56f35241523fBab1': {
-        symbol: 'ETH',
-        decimals: 18,
-        chains: [42161],
-    },
-    '0xaf88d065e77c8cC2239327C5EDb3A432268e5831': {
-        symbol: 'USDC',
-        decimals: 6,
-        chains: [42161],
-    },
-    '0xfd086bc7cd5c481dcc9c85ebe478a1c0b69fcbb9': {
-        symbol: 'USDT',
-        decimals: 6,
-        chains: [42161],
-    },
-    // Optimism Mainnet
-    '0x4200000000000000000000000000000000000006': {
-        symbol: 'ETH',
-        decimals: 18,
-        chains: [10, 8453], // shared address for Optimism-style L2s (Optimism & Base)
-    },
-    '0x7F5c764cBc14f9669B88837ca1490cCa17c31607': {
-        symbol: 'USDC',
-        decimals: 6,
-        chains: [10],
-    },
-    '0x94b008aa00579c1307B0ef2c499aD98a8ce58e58': {
-        symbol: 'USDT',
-        decimals: 6,
-        chains: [10],
-    },
-    // Base Mainnet
-    '0x833589fCD6eDb6E08f4c7C32D4f61Bf633E9F8Cf': {
-        symbol: 'USDC',
-        decimals: 6,
-        chains: [8453],
-    },
-    // Polygon PoS
-    '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619': {
-        symbol: 'ETH',
-        decimals: 18,
-        chains: [137],
-    },
-    '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174': {
-        symbol: 'USDC',
-        decimals: 6,
-        chains: [137],
-    },
-    '0xc2132D05D31c914A87C6611C10748AaCB4Fe742d': {
-        symbol: 'USDT',
-        decimals: 6,
-        chains: [137],
-    },
-    // BNB Smart Chain
-    '0x2170Ed0880ac9A755fd29B2688956BD959F933F8': {
-        symbol: 'ETH',
-        decimals: 18,
-        chains: [56],
-    },
-    '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d': {
-        symbol: 'USDC',
-        decimals: 18,
-        chains: [56],
-    },
-    '0x55d398326f99059fF775485246999027B3197955': {
-        symbol: 'USDT',
-        decimals: 18,
-        chains: [56],
-    },
-    // Avalanche C-Chain
-    '0x49D5c2BdFfac6CE2BFdB6640F4F80f226bc10bAB': {
-        symbol: 'ETH',
-        decimals: 18,
-        chains: [43114],
-    },
-    '0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E': {
-        symbol: 'USDC',
-        decimals: 6,
-        chains: [43114],
-    },
-    '0x9702230A8ea53601f5cd2dc00fdbcf13d4dF4A8c7': {
-        symbol: 'USDT',
-        decimals: 6,
-        chains: [43114],
-    },
-    // Scroll Mainnet
-    '0x5300000000000000000000000000000000000004': {
-        symbol: 'ETH',
-        decimals: 18,
-        chains: [534352],
-    },
-    // -----------------------------------------------------------------
-    // Testnet tokens (existing)
-    // -----------------------------------------------------------------
-    // USDC on Sepolia
-    '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238': {
-        symbol: 'USDC',
-        decimals: 6,
-        chains: [11155111],
-    },
-    // Mock DAI on Base Sepolia (replace with real if needed)
-    '0x11fe4b6ae13d2a6055c8d89530d10d79d5d95d9d': {
+    {
         symbol: 'DAI',
         decimals: 18,
         chains: [84532],
     },
-};
+];
 
 // ---------------------------------------------------------------------
 // Get token address on a specific chain
 // ---------------------------------------------------------------------
-export function getTokenOnChain(symbol: string, chainId: number): string | null {
-    for (const [addr, info] of Object.entries(TEST_TOKENS)) {
-        if (info.symbol === symbol && info.chains.includes(chainId)) {
-            return addr;
-        }
-    }
-    return null;
-}
-
-function resolveTokenMetadata(token: string): TestToken | null {
-    if (TEST_TOKENS[token]) return TEST_TOKENS[token];
-    const bySymbol = Object.values(TEST_TOKENS).find(
-        (meta) => meta.symbol.toLowerCase() === token.toLowerCase(),
+export function getTokenOnChain(symbol: string, chainId: number): TestToken | null {
+    return (
+        TEST_TOKENS.find(
+            (meta) => meta.symbol.toLowerCase() === symbol.toLowerCase() && meta.chains.includes(chainId),
+        ) ?? null
     );
-    return bySymbol ?? null;
 }
 
 function normalizeBridgeRequest(params: {
@@ -264,16 +166,17 @@ function normalizeBridgeRequest(params: {
     amount: bigint;
     recipient?: string;
 }) {
-    const meta = resolveTokenMetadata(params.token);
-    const symbol = meta?.symbol ?? params.token;
+    const referenceChainId = params.fromChainId ?? params.toChainId;
+    const meta = getTokenOnChain(params.token, referenceChainId);
     const amountFormatted = meta
         ? ethers.formatUnits(params.amount, meta.decimals)
         : params.amount.toString();
 
     return {
-        token: symbol,
+        token: params.token,
         amount: amountFormatted,
         chainId: params.toChainId,
+        fromChainId: params.fromChainId,
         sourceChains: params.fromChainId !== undefined ? [params.fromChainId] : undefined,
         recipient: params.recipient,
     };
@@ -294,9 +197,17 @@ function ensurePolyfills() {
 let sdkPromise: Promise<any> | null = null;
 let sdkInstance: any | null = null;
 let currentProvider: any | null = null;
+let sdkNetwork: NexusNetwork = 'testnet';
 
 function toHexChainId(chainId: number): `0x${string}` {
     return `0x${chainId.toString(16)}` as `0x${string}`;
+}
+
+function resolveNexusNetwork(chainId?: number): NexusNetwork {
+    if (chainId !== undefined && MAINNET_CHAIN_IDS.has(chainId)) {
+        return 'mainnet';
+    }
+    return 'testnet';
 }
 
 export async function ensureWalletChain(provider: any, chainId: number) {
@@ -338,15 +249,30 @@ export async function ensureWalletChain(provider: any, chainId: number) {
     }
 }
 
-async function getSdk() {
-    if (!sdkPromise) {
+async function getSdk(network: NexusNetwork = sdkNetwork) {
+    return getSdkForNetwork(network);
+}
+
+async function getSdkForNetwork(network: NexusNetwork) {
+    if (!sdkPromise || sdkNetwork !== network) {
         ensurePolyfills();
+        sdkNetwork = network;
         sdkPromise = import('@avail-project/nexus-core').then(({ NexusSDK }) => {
-            sdkInstance = new NexusSDK({ network: 'testnet' });
+            sdkInstance = new NexusSDK({ network });
             return sdkInstance;
         });
     }
     return sdkPromise;
+}
+
+async function ensureSdkForChain(chainId: number) {
+    const network = resolveNexusNetwork(chainId);
+    const sdk = await getSdkForNetwork(network);
+    if (!sdk.isInitialized()) {
+        if (!currentProvider) throw new Error('Initialize SDK first');
+        await sdk.initialize(currentProvider);
+    }
+    return sdk;
 }
 
 // ---------------------------------------------------------------------
@@ -398,20 +324,38 @@ export function isInitialized() {
 export async function initializeWithProvider(provider: any) {
     if (!provider) throw new Error('No EIP-1193 provider (e.g., MetaMask) found');
     currentProvider = provider;
-    const sdk = await getSdk();
+    let network = sdkNetwork;
+    if (provider?.request) {
+        try {
+            const chainIdHex = await provider.request({ method: 'eth_chainId' });
+            if (typeof chainIdHex === 'string') {
+                const chainIdNum = Number(chainIdHex);
+                if (!Number.isNaN(chainIdNum)) {
+                    network = resolveNexusNetwork(chainIdNum);
+                }
+            }
+        } catch (_) {
+            // ignore provider introspection errors and fall back to existing network
+        }
+    }
+    const sdk = await getSdk(network);
     if (sdk.isInitialized()) return;
     await sdk.initialize(provider);
 }
 
 export async function deinit() {
-    const sdk = await getSdk();
-    if (!sdk.isInitialized()) return;
-    await sdk.deinit();
+    if (sdkInstance?.isInitialized?.()) {
+        await sdkInstance.deinit();
+    }
+    sdkInstance = null;
+    sdkPromise = null;
+    sdkNetwork = 'testnet';
     currentProvider = null;
 }
 
 export async function getUnifiedBalances(options: { includeSwappable?: boolean } = {}) {
     const sdk = await getSdk();
+    if (!sdk.isInitialized()) throw new Error('Initialize SDK first');
     const primaryFlag = options.includeSwappable ?? true;
     try {
         const balances = await sdk.getUnifiedBalances(primaryFlag);
@@ -450,7 +394,10 @@ export async function transfer(params: {
     if (currentProvider) {
         await ensureWalletChain(currentProvider, params.fromChainId);
     }
-    const sdk = await getSdk();
+    if (!getTokenOnChain(params.token, params.fromChainId)) {
+        throw new Error(`Token ${params.token} is not available on chain ${params.fromChainId}`);
+    }
+    const sdk = await ensureSdkForChain(params.fromChainId);
     const request = normalizeBridgeRequest(params);
     if (request.recipient) {
         const result = await sdk.bridgeAndTransfer({
@@ -481,7 +428,10 @@ export async function bridge(params: {
     if (currentProvider) {
         await ensureWalletChain(currentProvider, params.fromChainId);
     }
-    const sdk = await getSdk();
+    if (!getTokenOnChain(params.token, params.fromChainId)) {
+        throw new Error(`Token ${params.token} is not available on chain ${params.fromChainId}`);
+    }
+    const sdk = await ensureSdkForChain(params.fromChainId);
     const request = normalizeBridgeRequest(params);
     const result = await sdk.bridge({
         token: request.token,
@@ -498,6 +448,9 @@ export async function bridge(params: {
 // ---------------------------------------------------------------------
 export async function registerApprovalHooks(provider: any) {
     const sdk = await getSdk();
+    if (!sdk.isInitialized()) {
+        await sdk.initialize(provider);
+    }
     const ethersProvider = new ethers.BrowserProvider(provider);
     const signer = await ethersProvider.getSigner();
 
