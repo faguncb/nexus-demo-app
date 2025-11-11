@@ -9,13 +9,13 @@ export const SUPPORTED_CHAINS = {
     10: { name: 'Optimism', native: 'ETH' },
     8453: { name: 'Base Mainnet', native: 'ETH' },
     42161: { name: 'Arbitrum One', native: 'ETH' },
+    137: { name: 'Polygon PoS', native: 'MATIC' },
+    43114: { name: 'Avalanche C-Chain', native: 'AVAX' },
+    534352: { name: 'Scroll', native: 'ETH' },
     11155111: { name: 'Sepolia', native: 'ETH' },
     84532: { name: 'Base Sepolia', native: 'ETH' },
     421614: { name: 'Arbitrum Sepolia', native: 'ETH' },
     11155420: { name: 'Optimism Sepolia', native: 'ETH' },
-    534352: { name: 'Scroll', native: 'ETH' },
-    43114: { name: 'Avalanche C-Chain', native: 'AVAX' },
-    137: { name: 'Polygon PoS', native: 'MATIC' },
 };
 
 const MAINNET_CHAIN_IDS = new Set<number>([1, 10, 8453, 42161]);
@@ -261,7 +261,10 @@ function sanitizeUnifiedBalances(assets: UnifiedBalanceAsset[]) {
         const chainId =
             asset.chainId ??
             asset.chain?.id ??
-            (typeof asset.chain === 'number' ? asset.chain : undefined);
+            (typeof asset.chain === 'number' ? asset.chain : undefined) ??
+            (asset.network?.chainId ?? asset.network?.id) ??
+            asset.destinationChainId ??
+            asset.sourceChainId;
         const chainMeta =
             chainId !== undefined && chainId !== null
                 ? (SUPPORTED_CHAINS as Record<number, { name: string; native: string }>)[chainId]
