@@ -109,6 +109,24 @@ type TestToken = {
     chains: number[];
 };
 
+type UnifiedBalanceAsset = {
+    symbol?: string;
+    token?: string;
+    name?: string;
+    chainId?: number;
+    chain?: { id?: number; name?: string };
+    chainName?: string;
+    balance?: string | number;
+    formattedBalance?: string | number;
+    amount?: string | number;
+    value?: string | number;
+    quantity?: string | number;
+    balanceInFiat?: string | number;
+    valueUSD?: string | number;
+    usdValue?: string | number;
+    [key: string]: any;
+};
+
 type NexusNetwork = 'testnet' | 'mainnet';
 
 export const TEST_TOKENS: TestToken[] = [
@@ -235,6 +253,30 @@ export async function ensureWalletChain(provider: any, chainId: number) {
     }
 }
 
+function sanitizeUnifiedBalances(assets: UnifiedBalanceAsset[]) {
+    return assets.map((asset) => {
+        const chainId =
+            asset.chainId ??
+            asset.chain?.id ??
+            (typeof asset.chain === 'number' ? asset.chain : undefined);
+        const chainMeta =
+            chainId !== undefined && chainId !== null
+                ? (SUPPORTED_CHAINS as Record<number, { name: string; native: string }>)[chainId]
+                : undefined;
+        const chainName =
+            chainMeta?.name ??
+            asset.chainName ??
+            asset.chain?.name ??
+            (chainId ? `Chain ${chainId}` : 'Unknown Chain');
+
+        return {
+            ...asset,
+            chainId,
+            chainName,
+        };
+    });
+}
+
 async function getSdk(network: NexusNetwork = sdkNetwork) {
     return getSdkForNetwork(network);
 }
@@ -343,31 +385,13 @@ export async function getUnifiedBalances(options: { includeSwappable?: boolean }
     const sdk = await getSdk();
     if (!sdk.isInitialized()) throw new Error('Initialize SDK first');
     const primaryFlag = options.includeSwappable ?? true;
-    try {
-        const balances = await sdk.getUnifiedBalances(primaryFlag);
-        if (Array.isArray(balances)) return balances;
-        if (balances && Array.isArray((balances as any).assets)) {
-            return (balances as any).assets;
-        }
-        return [];
-    } catch (error) {
-        const message = error instanceof Error ? error.message : '';
-        const isCurrenciesError = error instanceof TypeError && /currencies is not iterable/i.test(message);
-        if (isCurrenciesError && primaryFlag !== false) {
-            console.warn('[nexus] Unified balance fetch failed with swappable tokens, retrying without them');
-            const fallback = await sdk.getUnifiedBalances(false);
-            if (Array.isArray(fallback)) return fallback;
-            if (fallback && Array.isArray((fallback as any).assets)) {
-                return (fallback as any).assets;
-            }
-            return [];
-        }
-        if (isCurrenciesError) {
-            console.warn('[nexus] Falling back to empty balances due to malformed SDK response', error);
-            return [];
-        }
-        throw error;
+    const result = await sdk.getUnifiedBalances(primaryFlag);
+    if (!result) return [];
+    if (Array.isArray(result)) return sanitizeUnifiedBalances(result);
+    if ((result as any).assets && Array.isArray((result as any).assets)) {
+        return sanitizeUnifiedBalances((result as any).assets);
     }
+    return [];
 }
 
 export async function transfer(params: {
