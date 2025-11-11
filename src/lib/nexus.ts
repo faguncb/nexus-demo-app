@@ -13,6 +13,9 @@ export const SUPPORTED_CHAINS = {
     84532: { name: 'Base Sepolia', native: 'ETH' },
     421614: { name: 'Arbitrum Sepolia', native: 'ETH' },
     11155420: { name: 'Optimism Sepolia', native: 'ETH' },
+    534352: { name: 'Scroll', native: 'ETH' },
+    43114: { name: 'Avalanche C-Chain', native: 'AVAX' },
+    137: { name: 'Polygon PoS', native: 'MATIC' },
 };
 
 const MAINNET_CHAIN_IDS = new Set<number>([1, 10, 8453, 42161]);
@@ -269,10 +272,13 @@ function sanitizeUnifiedBalances(assets: UnifiedBalanceAsset[]) {
             asset.chain?.name ??
             (chainId ? `Chain ${chainId}` : 'Unknown Chain');
 
+        const nativeCurrency = chainMeta?.native ?? asset.nativeCurrency ?? asset.nativeSymbol;
+
         return {
             ...asset,
             chainId,
             chainName,
+            nativeCurrency,
         };
     });
 }
