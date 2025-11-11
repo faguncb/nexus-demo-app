@@ -258,13 +258,17 @@ export async function ensureWalletChain(provider: any, chainId: number) {
 
 function sanitizeUnifiedBalances(assets: UnifiedBalanceAsset[]) {
     return assets.map((asset) => {
-        const chainId =
+        const rawChain =
             asset.chainId ??
             asset.chain?.id ??
             (typeof asset.chain === 'number' ? asset.chain : undefined) ??
-            (asset.network?.chainId ?? asset.network?.id) ??
+            asset.network?.chainId ??
+            asset.network?.id ??
             asset.destinationChainId ??
-            asset.sourceChainId;
+            asset.sourceChainId ??
+            asset.chainID;
+        const parsedId = rawChain !== undefined && rawChain !== null ? Number(rawChain) : undefined;
+        const chainId = parsedId !== undefined && Number.isFinite(parsedId) ? parsedId : undefined;
         const chainMeta =
             chainId !== undefined && chainId !== null
                 ? (SUPPORTED_CHAINS as Record<number, { name: string; native: string }>)[chainId]

@@ -8,7 +8,7 @@ import FetchUnifiedBalanceButton from '@/components/fetch-unified-balance-button
 import DeinitButton from '@/components/de-init-button';
 import TransferProgress from '@/components/transfer-progress';
 import TransferForm from '@/components/transfer-form';
-import { isInitialized } from '@/src/lib/nexus';
+import { isInitialized, SUPPORTED_CHAINS } from '@/src/lib/nexus';
 
 export default function Page() {
     const [initialized, setInitialized] = useState(isInitialized());
@@ -44,10 +44,23 @@ export default function Page() {
     };
 
     const getSymbol = (asset: any) => asset?.symbol ?? asset?.token ?? asset?.name ?? 'Unknown Token';
-    const getChainLabel = (asset: any) =>
-        asset?.chainName ??
-        asset?.chain?.name ??
-        (asset?.chainId ? `Chain ${asset.chainId}` : asset?.chain?.id ?? 'Unknown Chain');
+    const getChainLabel = (asset: any) => {
+        const id =
+            asset?.chainId ??
+            asset?.chain?.id ??
+            (typeof asset?.chain === 'number' ? asset.chain : undefined) ??
+            asset?.network?.chainId ??
+            asset?.network?.id ??
+            asset?.destinationChainId ??
+            asset?.sourceChainId ??
+            asset?.chainID;
+        if (id !== undefined && id !== null) {
+            const meta = SUPPORTED_CHAINS[id as keyof typeof SUPPORTED_CHAINS];
+            if (meta?.name) return meta.name;
+            return `Chain ${id}`;
+        }
+        return 'Unknown Chain';
+    };
     const getUsdValue = (asset: any) => asset?.balanceInFiat ?? asset?.valueUSD ?? asset?.usdValue;
     const getWalletAddress = (asset: any) =>
         asset?.address ??
