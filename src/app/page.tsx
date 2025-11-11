@@ -22,40 +22,6 @@ export default function Page() {
         return [];
     }, [balances]);
 
-    const detailedAssets = useMemo(() => {
-        return assets.map((asset: any) => {
-            const symbol = asset?.symbol ?? asset?.token ?? asset?.name ?? 'Unknown Token';
-            const chainLabel = getChainLabel(asset);
-            const breakdown = Array.isArray(asset?.breakdown) ? asset.breakdown : [];
-            const components = breakdown.length
-                ? breakdown.map((b: any) => ({
-                    chainName: b?.chain?.name ?? `Chain ${b?.chain?.id ?? ''}`.trim(),
-                    balance: b?.balance ?? b?.formattedBalance ?? b?.amount ?? 0,
-                }))
-                : [
-                    {
-                        chainName: chainLabel,
-                        balance: asset?.balance ?? asset?.formattedBalance ?? asset?.amount ?? 0,
-                    },
-                ];
-            const totalBalance =
-                asset?.balance ??
-                asset?.formattedBalance ??
-                asset?.amount ??
-                asset?.value ??
-                asset?.quantity ??
-                0;
-            return {
-                symbol,
-                chainLabel,
-                totalBalance,
-                components,
-                usdValue: asset?.balanceInFiat ?? asset?.valueUSD ?? asset?.usdValue,
-                nativeCurrency: asset?.nativeCurrency,
-            };
-        });
-    }, [assets]);
-
     const formatAmount = (value: any) => {
         const raw =
             value ??
@@ -89,6 +55,40 @@ export default function Page() {
         }
         return 'Unknown Chain';
     };
+
+    const detailedAssets = useMemo(() => {
+        return assets.map((asset: any) => {
+            const symbol = asset?.symbol ?? asset?.token ?? asset?.name ?? 'Unknown Token';
+            const chainLabel = getChainLabel(asset);
+            const breakdown = Array.isArray(asset?.breakdown) ? asset.breakdown : [];
+            const components = breakdown.length
+                ? breakdown.map((b: any) => ({
+                    chainName: b?.chain?.name ?? `Chain ${b?.chain?.id ?? ''}`.trim(),
+                    balance: b?.balance ?? b?.formattedBalance ?? b?.amount ?? 0,
+                }))
+                : [
+                    {
+                        chainName: chainLabel,
+                        balance: asset?.balance ?? asset?.formattedBalance ?? asset?.amount ?? 0,
+                    },
+                ];
+            const totalBalance =
+                asset?.balance ??
+                asset?.formattedBalance ??
+                asset?.amount ??
+                asset?.value ??
+                asset?.quantity ??
+                0;
+            return {
+                symbol,
+                chainLabel,
+                totalBalance,
+                components,
+                usdValue: asset?.balanceInFiat ?? asset?.valueUSD ?? asset?.usdValue,
+                nativeCurrency: asset?.nativeCurrency,
+            };
+        });
+    }, [assets]);
     const getUsdValue = (asset: any) => asset?.balanceInFiat ?? asset?.valueUSD ?? asset?.usdValue;
     const getWalletAddress = (asset: any) =>
         asset?.address ??
