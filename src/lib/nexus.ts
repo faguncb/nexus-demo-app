@@ -1,7 +1,6 @@
 import { ethers } from 'ethers';
 
 // ... existing imports ...
-
 // ---------------------------------------------------------------------
 // Supported chains & token list (testnet)
 // ---------------------------------------------------------------------
@@ -443,7 +442,7 @@ export async function registerApprovalHooks(provider: any) {
     const signer = await ethersProvider.getSigner();
 
     // ---- Intent hook ---------------------------------------------------
-    sdk.setOnIntentHook(async (intent) => {
+    sdk.setOnIntentHook(async (intent: any) => {
         // 1. Show the user what will happen
         const msg = `
 You are about to submit a cross-chain intent:
@@ -455,10 +454,12 @@ Token: ${intent.token}   Amount: ${intent.amount}
         if (!confirm(msg)) throw new Error('User rejected intent');
 
         // 2. Ask for a typed-data signature (EIP-712)
+        const networkInfo = await signer.provider?.getNetwork();
+        const chainId = networkInfo?.chainId !== undefined ? Number(networkInfo.chainId) : 0;
         const domain = {
             name: 'Avail Nexus',
             version: '1',
-            chainId: await ethersProvider.getSigner().getChainId(),
+            chainId: Number.isNaN(chainId) ? 0 : chainId,
             verifyingContract: '0x0000000000000000000000000000000000000000', // placeholder
         };
 
@@ -483,7 +484,7 @@ Token: ${intent.token}   Amount: ${intent.amount}
     });
 
     // ---- Allowance hook ------------------------------------------------
-    sdk.setOnAllowanceHook(async (allowance) => {
+    sdk.setOnAllowanceHook(async (allowance: any) => {
         const msg = `
 You need to approve the Nexus router to spend your tokens.
 
