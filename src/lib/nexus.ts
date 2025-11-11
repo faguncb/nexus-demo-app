@@ -8,28 +8,15 @@ import { ethers } from 'ethers';
 export const SUPPORTED_CHAINS = {
     1: { name: 'Ethereum Mainnet', native: 'ETH' },
     10: { name: 'Optimism', native: 'ETH' },
-    56: { name: 'BNB Chain', native: 'BNB' },
-    137: { name: 'Polygon PoS', native: 'MATIC' },
     8453: { name: 'Base Mainnet', native: 'ETH' },
     42161: { name: 'Arbitrum One', native: 'ETH' },
-    43114: { name: 'Avalanche C-Chain', native: 'AVAX' },
-    534352: { name: 'Scroll', native: 'ETH' },
     11155111: { name: 'Sepolia', native: 'ETH' },
     84532: { name: 'Base Sepolia', native: 'ETH' },
     421614: { name: 'Arbitrum Sepolia', native: 'ETH' },
     11155420: { name: 'Optimism Sepolia', native: 'ETH' },
 };
 
-const MAINNET_CHAIN_IDS = new Set<number>([
-    1, // Ethereum Mainnet
-    10, // Optimism
-    56, // BNB Chain
-    137, // Polygon PoS
-    8453, // Base Mainnet
-    42161, // Arbitrum One
-    43114, // Avalanche C-Chain
-    534352, // Scroll
-]);
+const MAINNET_CHAIN_IDS = new Set<number>([1, 10, 8453, 42161]);
 
 export function isMainnetChain(chainId: number) {
     return MAINNET_CHAIN_IDS.has(chainId);
@@ -129,17 +116,17 @@ export const TEST_TOKENS: TestToken[] = [
     {
         symbol: 'ETH',
         decimals: 18,
-        chains: [1, 10, 8453, 42161, 137, 43114, 56, 534352, 11155111, 84532, 421614, 11155420],
+        chains: [1, 10, 8453, 42161, 11155111, 84532, 421614, 11155420],
     },
     {
         symbol: 'USDC',
         decimals: 6,
-        chains: [1, 10, 8453, 42161, 137, 43114, 56, 534352, 11155111, 84532, 421614, 11155420],
+        chains: [1, 10, 8453, 42161, 11155111, 84532, 421614, 11155420],
     },
     {
         symbol: 'USDT',
         decimals: 6,
-        chains: [1, 10, 8453, 42161, 137, 43114, 56, 534352, 421614, 11155420],
+        chains: [1, 10, 8453, 42161, 421614, 11155420],
     },
     {
         symbol: 'DAI',
