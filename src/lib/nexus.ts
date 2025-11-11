@@ -162,7 +162,8 @@ function normalizeBridgeRequest(params: {
     return {
         token: params.token,
         amount: amountFormatted,
-        chainId: params.toChainId,
+        toChainId: params.toChainId,
+        chainId: params.toChainId, // backwards compatibility with SDK helpers expecting `chainId`
         fromChainId: params.fromChainId,
         sourceChains: params.fromChainId !== undefined ? [params.fromChainId] : undefined,
         recipient: params.recipient,
@@ -390,7 +391,7 @@ export async function transfer(params: {
         const result = await sdk.bridgeAndTransfer({
             token: request.token,
             amount: request.amount,
-            chainId: request.chainId,
+            toChainId: request.toChainId,
             recipient: request.recipient as `0x${string}`,
             sourceChains: request.sourceChains,
         });
@@ -399,7 +400,7 @@ export async function transfer(params: {
     const result = await sdk.bridge({
         token: request.token,
         amount: request.amount,
-        chainId: request.chainId,
+        toChainId: request.toChainId,
         sourceChains: request.sourceChains,
     });
     return result.explorerUrl;
@@ -423,7 +424,7 @@ export async function bridge(params: {
     const result = await sdk.bridge({
         token: request.token,
         amount: request.amount,
-        chainId: request.chainId,
+        toChainId: request.toChainId,
         sourceChains: request.sourceChains,
         recipient: request.recipient as `0x${string}` | undefined,
     });
