@@ -12,6 +12,10 @@ export const SUPPORTED_CHAINS = {
     137: { name: 'Polygon PoS', native: 'MATIC' },
     43114: { name: 'Avalanche C-Chain', native: 'AVAX' },
     534352: { name: 'Scroll', native: 'ETH' },
+    56: { name: 'BNB Smart Chain', native: 'BNB' },
+    8217: { name: 'Kaia Mainnet', native: 'KAIA' },
+    999: { name: 'HyperEVM', native: 'HYPE' },
+    50104: { name: 'Sophon', native: 'SOPH' },
     11155111: { name: 'Sepolia', native: 'ETH' },
     84532: { name: 'Base Sepolia', native: 'ETH' },
     421614: { name: 'Arbitrum Sepolia', native: 'ETH' },
@@ -273,11 +277,22 @@ function sanitizeUnifiedBalances(assets: UnifiedBalanceAsset[]) {
             chainId !== undefined && chainId !== null
                 ? (SUPPORTED_CHAINS as Record<number, { name: string; native: string }>)[chainId]
                 : undefined;
-        const chainName =
+        let chainName =
             chainMeta?.name ??
             asset.chainName ??
             asset.chain?.name ??
-            (chainId ? `Chain ${chainId}` : 'Unknown Chain');
+            (chainId ? `Chain ${chainId}` : undefined);
+
+        if (!chainName) {
+            const breakdown = Array.isArray(asset.breakdown) ? asset.breakdown : [];
+            if (breakdown.length === 1) {
+                chainName = breakdown[0]?.chain?.name ?? `Chain ${breakdown[0]?.chain?.id ?? ''}`.trim();
+            } else if (breakdown.length > 1) {
+                chainName = 'Multiple Chains';
+            }
+        }
+
+        chainName = chainName ?? 'Unknown Chain';
 
         const nativeCurrency = chainMeta?.native ?? asset.nativeCurrency ?? asset.nativeSymbol;
 
