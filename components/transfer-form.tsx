@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { transfer, bridge, isInitialized, SUPPORTED_CHAINS, getTokenOnChain, TEST_TOKENS } from '@/src/lib/nexus';
+import { useEffect, useMemo, useState } from 'react';
+import { transfer, bridge, isInitialized, SUPPORTED_CHAINS, getTokenOnChain, TEST_TOKENS, isMainnetChain } from '@/src/lib/nexus';
 import { ethers } from 'ethers';
 
 interface Props {
@@ -23,18 +23,56 @@ export default function TransferForm({ onProgress }: Props) {
         ...info,
     }));
 
-    const tokens = TEST_TOKENS.filter((t) =>
-        t.chains.includes(fromChain)
+    const mainnetChains = useMemo(
+        () => Object.entries(SUPPORTED_CHAINS)
+            .map(([id, info]) => ({ id: Number(id), ...info }))
+            .filter((c) => isMainnetChain(c.id)),
+        []
     );
+    const testnetChains = useMemo(
+        () => Object.entries(SUPPORTED_CHAINS)
+            .map(([id, info]) => ({ id: Number(id), ...info }))
+            .filter((c) => !isMainnetChain(c.id)),
+        []
+    );
+
+    const tokens = useMemo(() => {
+        const availableOnSource = TEST_TOKENS.filter((t) => t.chains.includes(fromChain));
+        if (mode === 'bridge') {
+            return availableOnSource.filter((t) => t.chains.includes(toChain));
+        }
+        return availableOnSource;
+    }, [fromChain, toChain, mode]);
+
+    useEffect(() => {
+        if (!tokens.some((t) => t.symbol === tokenSymbol)) {
+            if (tokens.length > 0) {
+                setTokenSymbol(tokens[0].symbol);
+            }
+        }
+    }, [tokens, tokenSymbol]);
+
+    const toChainCandidates = useMemo(() => {
+        const group = isMainnetChain(fromChain) ? mainnetChains : testnetChains;
+        return group.filter((c) => c.id !== fromChain);
+    }, [fromChain, mainnetChains, testnetChains]);
 
     const submit = async () => {
         if (!isInitialized()) return alert('Initialize SDK first');
-        if (mode === 'bridge' && fromChain === toChain) {
-            return alert('Source and destination chains must differ for bridge');
+        if (mode === 'bridge') {
+            if (fromChain === toChain) {
+                return alert('Source and destination chains must differ for bridge');
+            }
+            if (isMainnetChain(fromChain) !== isMainnetChain(toChain)) {
+                return alert('Bridge currently supports only intra-environment transfers (mainnet↔︎mainnet or testnet↔︎testnet).');
+            }
         }
 
         const tokenMeta = getTokenOnChain(tokenSymbol, fromChain);
         if (!tokenMeta) return alert('Token not available on source chain');
+        if (mode === 'bridge' && !getTokenOnChain(tokenSymbol, toChain)) {
+            return alert('Token not available on destination chain');
+        }
 
         if (mode === 'transfer') {
             if (!recipient.trim()) {
@@ -111,23 +149,28 @@ export default function TransferForm({ onProgress }: Props) {
 
     const setBridgeMode = () => {
         setMode('bridge');
-        if (fromChain === toChain) {
-            const fallback = chains.find((c) => c.id !== fromChain);
-            if (fallback) setToChain(fallback.id);
+        const group = isMainnetChain(fromChain) ? mainnetChains : testnetChains;
+        if (!group.some((c) => c.id === toChain) || fromChain === toChain) {
+            const fallback = group.find((c) => c.id !== fromChain);
+            if (fallback) {
+                setToChain(fallback.id);
+            }
         }
     };
 
     const handleFromChainChange = (value: number) => {
         setFromChain(value);
-        const availableTokens = TEST_TOKENS.filter((t) => t.chains.includes(value));
-        if (availableTokens.length > 0 && !availableTokens.some((t) => t.symbol === tokenSymbol)) {
-            setTokenSymbol(availableTokens[0].symbol);
-        }
+        // token reset handled by effect
         if (mode === 'transfer') {
             setToChain(value);
-        } else if (mode === 'bridge' && value === toChain) {
-            const fallback = chains.find((c) => c.id !== value);
-            if (fallback) setToChain(fallback.id);
+        } else if (mode === 'bridge') {
+            const group = isMainnetChain(value) ? mainnetChains : testnetChains;
+            if (!group.some((c) => c.id === toChain) || value === toChain) {
+                const fallback = group.find((c) => c.id !== value);
+                if (fallback) {
+                    setToChain(fallback.id);
+                }
+            }
         }
     };
 
@@ -179,13 +222,11 @@ export default function TransferForm({ onProgress }: Props) {
                             onChange={(e) => setToChain(Number(e.target.value))}
                             className="mt-1 w-full p-2 border rounded"
                         >
-                            {chains
-                                .filter((c) => c.id !== fromChain)
-                                .map((c) => (
-                                    <option key={c.id} value={c.id}>
-                                        {c.name}
-                                    </option>
-                                ))}
+                        {toChainCandidates.map((c) => (
+                            <option key={c.id} value={c.id}>
+                                {c.name}
+                            </option>
+                        ))}
                         </select>
                     ) : (
                         <div className="mt-1 w-full p-2 border rounded bg-gray-100 text-gray-700">
