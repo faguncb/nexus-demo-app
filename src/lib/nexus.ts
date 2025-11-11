@@ -161,8 +161,7 @@ function normalizeBridgeRequest(params: {
     return {
         token: params.token,
         amount: amountFormatted,
-        toChainId: params.toChainId,
-        chainId: params.toChainId, // backwards compatibility with SDK helpers expecting `chainId`
+        chainId: params.toChainId,
         fromChainId: params.fromChainId,
         sourceChains: params.fromChainId !== undefined ? [params.fromChainId] : undefined,
         recipient: params.recipient,
@@ -381,28 +380,30 @@ export async function transfer(params: {
     if (currentProvider) {
         await ensureWalletChain(currentProvider, params.fromChainId);
     }
-    if (!getTokenOnChain(params.token, params.fromChainId)) {
-        throw new Error(`Token ${params.token} is not available on chain ${params.fromChainId}`);
+    if (!getTokenOnChain(params.token, params.toChainId)) {
+        throw new Error(`Token ${params.token} is not available on destination chain ${params.toChainId}`);
     }
     const sdk = await ensureSdkForChain(params.fromChainId);
-    const request = normalizeBridgeRequest(params);
-    if (request.recipient) {
-        const result = await sdk.bridgeAndTransfer({
-            token: request.token,
-            amount: request.amount,
-            toChainId: request.toChainId,
-            recipient: request.recipient as `0x${string}`,
-            sourceChains: request.sourceChains,
-        });
-        return result.transactionHash ?? result.explorerUrl ?? '';
-    }
-    const result = await sdk.bridge({
-        token: request.token,
-        amount: request.amount,
-        toChainId: request.toChainId,
-        sourceChains: request.sourceChains,
+    const amountFormatted = ethers.formatUnits(
+        params.amount,
+        getTokenOnChain(params.token, params.fromChainId)?.decimals ?? 18,
+    );
+    const result = await sdk.transfer({
+        token: params.token.toUpperCase(),
+        amount: amountFormatted,
+        chainId: params.toChainId,
+        recipient: params.recipient as `0x${string}`,
+        sourceChains: [params.fromChainId],
     });
-    return result.explorerUrl;
+    if (!result) throw new Error('Transfer failed: no response');
+    if ((result as any).success === false) {
+        throw new Error((result as any).error ?? 'Transfer failed');
+    }
+    return (
+        (result as any).transactionHash ??
+        (result as any).explorerUrl ??
+        ''
+    );
 }
 
 export async function bridge(params: {
@@ -423,11 +424,20 @@ export async function bridge(params: {
     const result = await sdk.bridge({
         token: request.token,
         amount: request.amount,
-        toChainId: request.toChainId,
+        chainId: request.chainId,
         sourceChains: request.sourceChains,
         recipient: request.recipient as `0x${string}` | undefined,
     });
-    return result.explorerUrl;
+    if (!result) throw new Error('Bridge failed: no response');
+    if ((result as any).success === false) {
+        throw new Error((result as any).error ?? 'Bridge failed');
+    }
+    const explorerUrl = (result as any).explorerUrl ?? '';
+    const transactionHash = (result as any).transactionHash ?? '';
+    if (!explorerUrl && !transactionHash) {
+        throw new Error('Bridge succeeded but returned no explorer URL or transaction hash');
+    }
+    return transactionHash || explorerUrl;
 }
 
 // ---------------------------------------------------------------------
