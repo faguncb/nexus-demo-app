@@ -128,7 +128,8 @@ export default function TransferForm({ onProgress }: Props) {
                         : 'Transaction submitted to network',
                 recipient: mode === 'transfer' ? recipient.trim() : undefined,
             });
-            alert(`${mode.toUpperCase()} submitted! Tx: ${txHash.slice(0, 10)}...`);
+            const label = txHash ? txHash.slice(0, 10) : 'N/A';
+            alert(`${mode.toUpperCase()} submitted! Tx: ${label}...`);
         } catch (e: any) {
             onProgress?.({
                 type: mode,
@@ -295,7 +296,7 @@ export default function TransferForm({ onProgress }: Props) {
                             rel="noopener noreferrer"
                             className="text-xs text-blue-600 underline"
                         >
-                            View Tx: {lastTx.slice(0, 10)}...
+                            View Tx: {lastTx.length > 0 ? lastTx.slice(0, 10) : 'N/A'}...
                         </a>
                     </div>
                 )}
