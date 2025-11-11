@@ -22,10 +22,38 @@ export default function Page() {
         return [];
     }, [balances]);
 
-    const uniqueTokens = useMemo(() => {
-        return new Set(
-            assets.map((asset: any) => (asset?.symbol ?? asset?.token ?? asset?.name ?? 'Unknown Token').toString()),
-        ).size;
+    const detailedAssets = useMemo(() => {
+        return assets.map((asset: any) => {
+            const symbol = asset?.symbol ?? asset?.token ?? asset?.name ?? 'Unknown Token';
+            const chainLabel = getChainLabel(asset);
+            const breakdown = Array.isArray(asset?.breakdown) ? asset.breakdown : [];
+            const components = breakdown.length
+                ? breakdown.map((b: any) => ({
+                    chainName: b?.chain?.name ?? `Chain ${b?.chain?.id ?? ''}`.trim(),
+                    balance: b?.balance ?? b?.formattedBalance ?? b?.amount ?? 0,
+                }))
+                : [
+                    {
+                        chainName: chainLabel,
+                        balance: asset?.balance ?? asset?.formattedBalance ?? asset?.amount ?? 0,
+                    },
+                ];
+            const totalBalance =
+                asset?.balance ??
+                asset?.formattedBalance ??
+                asset?.amount ??
+                asset?.value ??
+                asset?.quantity ??
+                0;
+            return {
+                symbol,
+                chainLabel,
+                totalBalance,
+                components,
+                usdValue: asset?.balanceInFiat ?? asset?.valueUSD ?? asset?.usdValue,
+                nativeCurrency: asset?.nativeCurrency,
+            };
+        });
     }, [assets]);
 
     const formatAmount = (value: any) => {
@@ -135,52 +163,50 @@ export default function Page() {
                                 </div>
                             ) : (
                                 <>
-                                    <div className="flex flex-wrap gap-3 text-sm text-gray-600">
-                                        <span className="rounded-full bg-blue-50 px-3 py-1 text-blue-600">
-                                            {assets.length} asset{assets.length === 1 ? '' : 's'}
-                                        </span>
-                                        <span className="rounded-full bg-purple-50 px-3 py-1 text-purple-600">
-                                            {uniqueTokens} token{uniqueTokens === 1 ? '' : 's'}
-                                        </span>
-                                    </div>
-                                    <ul className="max-h-96 overflow-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
-                                        {assets.map((asset: any, idx: number) => {
-                                            const amount =
-                                                asset?.formattedBalance ??
-                                                asset?.balance ??
-                                                asset?.amount ??
-                                                asset?.value ??
-                                                asset?.quantity;
-                                            const usdValue = getUsdValue(asset);
-                                        return (
-                                                <li key={`${getSymbol(asset)}-${idx}`} className="flex items-center justify-between gap-4 p-4">
+                                    <div className="max-h-96 overflow-auto rounded-lg border border-gray-200">
+                                        {detailedAssets.map((asset, idx) => (
+                                            <div key={`${asset.symbol}-${idx}`} className="border-b border-gray-100 p-4 last:border-b-0">
+                                                <div className="flex items-start justify-between gap-4">
                                                     <div>
-                                                        <div className="text-sm font-semibold text-gray-900">
-                                                            {getSymbol(asset)}
+                                                        <div className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                                            {asset.symbol}
+                                                            <span className="rounded bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                                                                {asset.chainLabel}
+                                                            </span>
                                                         </div>
-                                                        <div className="text-xs text-gray-500">
-                                                            {getChainLabel(asset)}
-                                                            {getWalletAddress(asset) && (
-                                                                <span className="ml-2 inline-block rounded bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">
-                                                                    {getWalletAddress(asset)}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <div className="text-sm font-semibold text-gray-900">
-                                                            {formatAmount(amount)}
-                                                        </div>
-                                                        {usdValue !== undefined && usdValue !== null && (
-                                                            <div className="text-xs text-gray-500">
-                                                                ≈ ${formatAmount(usdValue)}
+                                                        {getWalletAddress(assets[idx]) && (
+                                                            <div className="mt-1 text-xs text-gray-500">
+                                                                Wallet: {getWalletAddress(assets[idx])}
                                                             </div>
                                                         )}
                                                     </div>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
+                                                    <div className="text-right">
+                                                        <div className="text-sm font-semibold text-gray-900">
+                                                            {formatAmount(asset.totalBalance)} {asset.symbol}
+                                                        </div>
+                                                        {asset.usdValue !== undefined && asset.usdValue !== null && (
+                                                            <div className="text-xs text-gray-500">
+                                                                ≈ ${formatAmount(asset.usdValue)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                {asset.components.length > 1 && (
+                                                    <div className="mt-3 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
+                                                        <div className="font-semibold text-gray-700 mb-2">Breakdown</div>
+                                                        <div className="grid gap-1">
+                                                            {asset.components.map((component, cIdx) => (
+                                                                <div key={`${asset.symbol}-${component.chainName}-${cIdx}`} className="flex justify-between">
+                                                                    <span>{component.chainName}</span>
+                                                                    <span>{formatAmount(component.balance)}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
                                 </>
                             )}
                         </div>
